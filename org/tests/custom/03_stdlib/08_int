@@ -1,0 +1,51 @@
+The `int()` function converts the given value into a signed integer
+value and returns the resulting number. In case the value is of type
+string, a second optional base argument may be specified which is
+passed to the underlying strtoll(3) implementation.
+
+Returns `NaN` if the given argument is not convertible into a number.
+Returns `NaN` if the conversion result is out of range.
+
+-- Testcase --
+{%
+	printf("%.J\n", [
+		int(),
+		int(false),
+		int(123),
+		int(456.789),
+		int(""),
+		int("invalid"),
+		int("deaf"),
+		int("0x1000"),
+		int("0xffffffffffffffff"),
+		int("0177"),
+		int("+145"),
+		int("-96"),
+		int("0177", 8),
+		int("0x1000", 16),
+		int("1111", 2),
+		int("0xffffffffffffffff", 16)
+	]);
+%}
+-- End --
+
+-- Expect stdout --
+[
+	0,
+	0,
+	123,
+	456,
+	"NaN",
+	"NaN",
+	"NaN",
+	0,
+	0,
+	177,
+	145,
+	-96,
+	127,
+	4096,
+	15,
+	"NaN"
+]
+-- End --

@@ -1,0 +1,189 @@
+When invoked with a file path argment, the `render()` function executes
+the specified path as ucode script, optionally setting a different
+execution scope for the invoked file, and captures the produced output
+in a string.
+
+If the specified path is relative, it is treated as being relative to the
+source file currently being executed or the current working directory in
+case the interpreter executes code from stdin or a command line argument.
+
+Throws an exception if the given path value is not a string.
+
+Throws an exception if a scope argument is specified and not a valid object.
+
+Throws an exception if the given path could not be found or opened.
+
+Throws an exception if the given file could not be compiled.
+
+When invoked with a function value, `render()` invokes the function, passes
+all remaining arugments to it and captures any produces output in a string.
+
+Returns a string containing the captured output of the executed file or
+function.
+
+-- Testcase --
+{%
+	let real_printf = printf;
+
+	printf("%.J\n", [
+		// include by relative path
+		render("files/include.uc"),
+
+		// include by absolute path
+		render(TESTFILES_PATH + "/include.uc"),
+
+		// include with overridden scope
+		render("files/include.uc", {
+			printf: function(...args) {
+				real_printf("This is the wrapped printf() getting called!\n");
+
+				return real_printf(...args);
+			}
+		}),
+
+		// include with isolated scope
+		render("files/include.uc", proto({
+			printf: function(...args) {
+				real_printf("This is the wrapped printf() getting called!\n");
+
+				return real_printf(...args);
+			}
+		}, {}))
+	]);
+%}
+-- End --
+
+-- File include.uc --
+{%
+	printf("This is the include file running! Can I access the global env? %s\n",
+		REQUIRE_SEARCH_PATH ? "Yes!" : "No.");
+%}
+-- End --
+
+-- Expect stdout --
+[
+	"This is the include file running! Can I access the global env? Yes!\n",
+	"This is the include file running! Can I access the global env? Yes!\n",
+	"This is the wrapped printf() getting called!\nThis is the include file running! Can I access the global env? Yes!\n",
+	"This is the wrapped printf() getting called!\nThis is the include file running! Can I access the global env? No.\n"
+]
+-- End --
+
+
+An invalid path value triggers an exception.
+
+-- Testcase --
+{%
+	render(true);
+%}
+-- End --
+
+-- Expect stderr --
+Type error: Passed filename is not a string
+In line 2, byte 13:
+
+ `    render(true);`
+  Near here -----^
+
+
+-- End --
+
+
+An invalid scope value triggers an exception.
+
+-- Testcase --
+{%
+	render("test", true);
+%}
+-- End --
+
+-- Expect stderr --
+Type error: Passed scope value is not an object
+In line 2, byte 21:
+
+ `    render("test", true);`
+  Near here -------------^
+
+
+-- End --
+
+
+A not found file triggers an exception.
+
+-- Testcase --
+{%
+	render("files/doesnotexist.uc");
+%}
+-- End --
+
+-- Expect stderr --
+Runtime error: Include file not found
+In line 2, byte 32:
+
+ `    render("files/doesnotexist.uc");`
+  Near here ------------------------^
+
+
+-- End --
+
+
+A compilation error in the file triggers an exception.
+
+-- Testcase --
+{%
+	render("files/broken.uc");
+%}
+-- End --
+
+-- File broken.uc --
+{%
+	// Unclosed object to force syntax error
+	return {
+%}
+-- End --
+
+-- Expect stderr --
+Runtime error: Unable to compile source file './files/broken.uc':
+
+  | Syntax error: Expecting label
+  | In line 4, byte 1:
+  |
+  |  `    return {`
+  |   Near here --^
+
+In line 2, byte 26:
+
+ `    render("files/broken.uc");`
+  Near here ------------------^
+
+
+-- End --
+
+
+Rendering a function value will capture it's output.
+
+-- Testcase --
+{%
+	name = "world";
+
+	printf("%.J\n", [
+		render(print, "Test"),
+		render(loadstring("Hello, {{ name }}!")),
+		render(function(name) {
+			include("files/greeting.uc", { name })
+		}, "Bob")
+	]);
+%}
+-- End --
+
+-- File greeting.uc --
+Hello, {{ name }}
+-- End --
+
+-- Expect stdout --
+[
+	"Test",
+	"Hello, world!",
+	"Hello, Bob\n"
+]
+-- End --

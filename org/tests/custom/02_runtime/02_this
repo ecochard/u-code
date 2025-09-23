@@ -1,0 +1,50 @@
+The "this" object accesses the current function context.
+
+-- Expect stdout --
+true
+true
+-- End --
+
+-- Testcase --
+{%
+	// Functions not invoked on objects have no this context
+	function test() {
+		return (this === null);
+	}
+
+	// When invoked, "this" will point to the object containing the function
+	let o;
+	o = {
+		test: function() {
+			return (this === o);
+		}
+	};
+
+	print(test(), "\n");
+	print(o.test(), "\n");
+%}
+-- End --
+
+Test that the context is properly restored if function call arguments are
+dot or bracket expressions as well.
+
+-- Expect stdout --
+true
+true
+-- End --
+
+-- Testcase --
+{%
+	let o;
+	o = {
+		test: function() {
+			return (this === o);
+		}
+	};
+
+	let dummy = { foo: true, bar: false };
+
+	print(o.test(dummy.foo, dummy.bar), "\n");
+	print(o.test(dummy.foo, o.test(dummy.foo, dummy.bar)), "\n");
+%}
+-- End --

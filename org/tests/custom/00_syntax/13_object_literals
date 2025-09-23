@@ -1,0 +1,190 @@
+The ucode script language supports declaring objects (dictionaries) using
+either JSON or JavaScript notation.
+
+-- Expect stdout --
+{ }
+{ "name": "Bob", "age": 31, "email": { "work": "bob@example.com", "private": "bob@example.org" } }
+{ "banana": "yellow", "tomato": "red", "broccoli": "green" }
+{ "foo": "bar", "complex key": "qrx" }
+{ "foo": { "bar": true } }
+-- End --
+
+-- Testcase --
+{%
+	// An empty object can be declared using a pair of curly brackets
+	empty_obj = { };
+
+	// It is also possible to use JSON notation to declare an object
+	json_obj = {
+		"name": "Bob",
+		"age": 31,
+		"email": {
+			"work": "bob@example.com",
+			"private": "bob@example.org"
+		}
+	};
+
+	// Declaring an object in JavaScript notation is supported as well
+	another_obj = {
+		banana: "yellow",
+		tomato: "red",
+		broccoli: "green"
+	};
+
+	// Mixing styles is allowed too
+	third_obj = {
+		foo: "bar",
+		"complex key": "qrx"
+	};
+
+	// Important caveat: when nesting objects, ensure that curly brackets
+	// are separated by space or newline to avoid interpretation as
+	// expression block tag!
+	nested_obj = { foo: { bar: true } }; // <-- mind the space in "} }"
+
+	// Printing (or stringifying) objects will return their JSON representation
+	print(empty_obj, "\n");
+	print(json_obj, "\n");
+	print(another_obj, "\n");
+	print(third_obj, "\n");
+	print(nested_obj, "\n");
+%}
+-- End --
+
+
+Additionally, ucode implements ES6-like spread operators to allow shallow copying
+of object properties into other objects.
+
+-- Expect stdout --
+{ "foo": true, "bar": false }
+{ "foo": true, "bar": false, "baz": 123, "qrx": 456 }
+{ "foo": false, "bar": true, "baz": 123, "qrx": 456 }
+{ "foo": true, "bar": false }
+{ "foo": true, "bar": false, "level2": { "baz": 123, "qrx": 456 } }
+{ "foo": true, "bar": false, "0": 7, "1": 8, "2": 9 }
+-- End --
+
+-- Testcase --
+{%
+	o1 = { foo: true, bar: false };
+	o2 = { baz: 123, qrx: 456 };
+	arr = [7, 8, 9];
+
+	print(join("\n", [
+		// copying one object into another
+		{ ...o1 },
+
+		// combining two objects
+		{ ...o1, ...o2 },
+
+		// copying object and override properties
+		{ ...o1, ...o2, foo: false, bar: true },
+
+		// default properties overwritten by spread operator
+		{ foo: 123, bar: 456, ...o1 },
+
+		// nested spread operators
+		{ ...o1, level2: { ...o2 } },
+
+		// merging array into objects
+		{ ...o1, ...arr }
+	]), "\n");
+%}
+-- End --
+
+
+ES2015 short hand property notation is supported as well.
+
+-- Expect stdout --
+{ "a": 123, "b": true, "c": "test" }
+-- End --
+
+-- Testcase --
+{%
+	a = 123;
+	b = true;
+	c = "test";
+
+	o = { a, b, c };
+
+	print(o, "\n");
+%}
+-- End --
+
+-- Expect stderr --
+Syntax error: Unexpected token
+Expecting ':'
+In line 2, byte 14:
+
+ `    o = { "foo" };`
+  Near here ------^
+
+
+-- End --
+
+-- Testcase --
+{%
+	o = { "foo" };
+%}
+-- End --
+
+-- Expect stderr --
+Syntax error: Invalid identifier
+In line 2, byte 8:
+
+ `    o = { function };`
+            ^-- Near here
+
+
+-- End --
+
+-- Testcase --
+{%
+	o = { function };
+%}
+-- End --
+
+
+ES2015 computed property names are supported.
+
+-- Expect stdout --
+{ "test": true, "hello": false, "ABC": 123 }
+-- End --
+
+-- Testcase --
+{%
+	s = "test";
+	o = {
+		[s]: true,
+		["he" + "llo"]: false,
+		[uc("abc")]: 123
+	};
+
+	print(o, "\n");
+%}
+-- End --
+
+-- Expect stderr --
+Syntax error: Expecting expression
+In line 2, byte 10:
+
+ `    o1 = { []: true };`
+  Near here --^
+
+
+Syntax error: Unexpected token
+Expecting ']'
+In line 3, byte 14:
+
+ `    o2 = { [true, false]: 123 };`
+  Near here ------^
+
+
+-- End --
+
+-- Testcase --
+{%
+	o1 = { []: true };
+	o2 = { [true, false]: 123 };
+%}
+-- End --

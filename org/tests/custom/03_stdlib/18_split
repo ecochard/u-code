@@ -1,0 +1,107 @@
+The `split()` function breaks the given string into multiple substrings,
+using the given separator value.
+
+The separator may be either a string or a regular expression value.
+
+Returns an array containing the resulting parts.
+
+Returns `null` if the given input value is not a string or if the separator
+argument is neither a string nor a regular expression.
+
+
+-- Testcase --
+{%
+	print(join("\n", [
+		// split by string
+		split("foo|bar|baz", "|"),
+
+		// split by regexp
+		split("apples, bananas and strawberries are fruits", /, | and | are | /),
+
+		// splitting an empty string yields an array containing one empty string
+		split("", "|"),
+		split("", ""),
+		split("", /\s+/),
+
+		// splitting with an empty string as separator yields an array containing
+		// all characters individually
+		split("foo|bar|baz", ""),
+		split("foo|bar|baz", /()/),
+
+		// splitting on a separator not found within the string will yield an
+		// array containing the entire string as sole element
+		split("foo|bar|baz", "xxx"),
+		split("foo|bar|baz", /\d+/),
+
+		// subsequent separators are not coalesced
+		split("abc|||def", "|"),
+		split("foo1bar23baz", /[[:digit:]]/),
+
+		// leading and trailing empty substrings are retained
+		split("|abc|def|", "|"),
+		split(",foo;bar:", /[,;:]/),
+
+		// subject and split strings handle embedded \0
+		split("foo=1\0bar=2\0baz=3", "\0"),
+
+		// supplying a limit only splits the string into that many parts
+		split("foo=1=2=3", "=", 2),
+
+		// limit of one produces a result array conaining the entire string as sole item
+		split("foo=1=2=3", "=", 1),
+
+		// negative limit yields an empty result array
+		split("foo=1=2=3", "=", -1),
+
+		// zero limit yields an empty result array
+		split("foo=1=2=3", "=", 0),
+	]), "\n");
+%}
+-- End --
+
+-- Expect stdout --
+[ "foo", "bar", "baz" ]
+[ "apples", "bananas", "strawberries", "fruits" ]
+[ "" ]
+[ "" ]
+[ "" ]
+[ "f", "o", "o", "|", "b", "a", "r", "|", "b", "a", "z" ]
+[ "f", "o", "o", "|", "b", "a", "r", "|", "b", "a", "z" ]
+[ "foo|bar|baz" ]
+[ "foo|bar|baz" ]
+[ "abc", "", "", "def" ]
+[ "foo", "bar", "", "baz" ]
+[ "", "abc", "def", "" ]
+[ "", "foo", "bar", "" ]
+[ "foo=1", "bar=2", "baz=3" ]
+[ "foo", "1=2=3" ]
+[ "foo=1=2=3" ]
+[ ]
+[ ]
+-- End --
+
+
+Supplying an invalid input string value will yield `null`.
+
+-- Testcase --
+{%
+	printf("%.J\n", split(true, "u"));
+%}
+-- End --
+
+-- Expect stdout --
+null
+-- End --
+
+
+Supplying a non-string, non-regexp separator will yield `null`.
+
+-- Testcase --
+{%
+	printf("%.J\n", split("null true false", true));
+%}
+-- End --
+
+-- Expect stdout --
+null
+-- End --

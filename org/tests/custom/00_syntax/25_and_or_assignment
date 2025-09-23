@@ -1,0 +1,139 @@
+The logical AND and logical OR assignment operators set the left hand side
+variable or value to the right hand side expression result depending on
+whether the lhs value is truish.
+
+
+1. The `&&=` operator overwrites the lhs variable or field with the rhs
+expression result if the lhs is truish.
+
+-- Expect stdout --
+[
+	null,
+	false,
+	"is truish",
+	null,
+	false,
+	"is truish"
+]
+-- End --
+
+-- Testcase --
+{%
+	x = null;
+	y = false;
+	z = true;
+
+	o = {
+		a: null,
+		b: false,
+		c: true
+	};
+
+	res = [];
+
+	push(res, x &&= "is truish");
+	push(res, y &&= "is truish");
+	push(res, z &&= "is truish");
+
+	push(res, o.a &&= "is truish");
+	push(res, o.b &&= "is truish");
+	push(res, o.c &&= "is truish");
+
+	printf("%.J\n", res);
+%}
+-- End --
+
+
+2. The `||=` operator overwrites the lhs variable or field with the rhs
+expression result if the lhs is falsy.
+
+-- Expect stdout --
+[
+	"is falsy",
+	"is falsy",
+	true,
+	"is falsy",
+	"is falsy",
+	true
+]
+-- End --
+
+-- Testcase --
+{%
+	x = null;
+	y = false;
+	z = true;
+
+	o = {
+		a: null,
+		b: false,
+		c: true
+	};
+
+	res = [];
+
+	push(res, x ||= "is falsy");
+	push(res, y ||= "is falsy");
+	push(res, z ||= "is falsy");
+
+	push(res, o.a ||= "is falsy");
+	push(res, o.b ||= "is falsy");
+	push(res, o.c ||= "is falsy");
+
+	printf("%.J\n", res);
+%}
+-- End --
+
+
+3. Ensure that the assignment value expression is not evaluated if the
+assignment condition is false.
+
+-- Expect stdout --
+[
+	false,
+	false,
+	true,
+	false,
+	false,
+	true,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+]
+-- End --
+
+-- Testcase --
+{%
+	a = 0;
+	b = 0;
+	c = 0;
+	d = 0;
+	e = 0;
+	f = 0;
+
+	o = {
+		a: false,
+		b: false,
+		c: true
+	};
+
+	x = false;
+	y = false;
+	z = true;
+
+	res = [];
+
+	push(res, x ??= a++);
+	push(res, y &&= b++);
+	push(res, z ||= c++);
+
+	push(res, o.a ??= d++);
+	push(res, o.b &&= e++);
+	push(res, o.c ||= f++);
+
+	printf("%.J\n", [ ...res, a, b, c, d, e, f ]);
+%}
+-- End --

@@ -1,0 +1,50 @@
+String literals may be enclosed in single or double quotes.
+Embedded escape sequences are started with a backslash, followed
+by either a hexadecimal, an octal or a single character escape sequence.
+
+-- Expect stdout --
+Single quoted string
+Double quoted string
+Unicode escape sequence: ☀💩
+Escaped double quote (") character
+Escaped single quote (') character
+Hexadecimal escape: XYZ xyz
+Octal escape: ABC xyz
+{ "Single char escape": "\u0007\b\u001b\f\r\t\u000b\\\n" }
+-- End --
+
+-- Testcase --
+{{ 'Single quoted string' }}
+{{ "Double quoted string" }}
+{{ "Unicode escape sequence: \u2600\uD83D\uDCA9" }}
+{{ "Escaped double quote (\") character" }}
+{{ 'Escaped single quote (\') character' }}
+{{ "Hexadecimal escape: \x58\x59\x5A \x78\x79\x7a" }}
+{{ "Octal escape: \101\102\103 \170\171\172" }}
+{{ { "Single char escape": "\a\b\e\f\r\t\v\\\n" } }}
+-- End --
+
+
+Testing various parsing corner cases.
+
+-- Expect stdout --
+[ "\t", "\n", "y", "\u0001", "\n", "\u0001\u0002", "\u0001\u0002", "\u0001\u0002", "\u0001a", "\na" ]
+-- End --
+
+-- Testcase --
+{%
+	print([
+		"\	",  	// properly handle escaped tab
+		"\
+",  				// properly handle escaped newline
+		"\y",		// substitute unrecognized escape with escaped char
+		"\1",		// handle short octal sequence at end of string
+		"\12",		// handle short octal sequence at end of string
+		"\1\2",		// handle subsequent short octal sequences
+		"\001\2",	// handle short sequence after long one
+		"\1\002",	// handle long sequence after short one
+		"\1a",		// handle short octal sequence terminated by non-octal char
+		"\12a"		// handle short octal sequence terminated by non-octal char
+	], "\n");
+%}
+-- End --

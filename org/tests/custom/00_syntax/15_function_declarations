@@ -1,0 +1,164 @@
+Function declarations follow the ECMAScript 5 syntax. Functions can be
+declared anonymously, which is useful for "throw-away" functions such
+as sort or filter callbacks or for building objects or arrays of function
+values.
+
+If functions are declared with a name, the resulting function value is
+automatically assigned under the given name to the current scope.
+
+When function values are stringifed, the resulting string will describe
+the declaration of the function.
+
+Nesting function declarations is possible as well.
+
+
+-- Expect stdout --
+function() { ... }
+function test_fn(a, b) { ... }
+function test2_fn(a, b) { ... }
+
+A function declaration using the alternative syntax:
+The function was called with arguments 123 and 456.
+
+-- End --
+
+-- Testcase --
+{%
+	// declare an anonymous function and
+	// assign resulting value
+	anon_fn = function() {
+		return "test";
+	};
+
+	// declare a named function
+	function test_fn(a, b) {
+		return a + b;
+	}
+
+	// nesting functions is legal
+	function test2_fn(a, b) {
+		function test3_fn(a, b) {
+			return a * b;
+		}
+
+		return a + test3_fn(a, b);
+	}
+
+	print(anon_fn, "\n");
+	print(test_fn, "\n");
+	print(test2_fn, "\n");
+%}
+
+A function declaration using the alternative syntax:
+{% function test3_fn(a, b): %}
+The function was called with arguments {{ a }} and {{ b }}.
+{% endfunction %}
+{{ test3_fn(123, 456) }}
+-- End --
+
+
+Additionally, ucode implements ES6-like "rest" argument syntax to declare
+variadic functions.
+
+-- Expect stdout --
+function non_variadic(a, b, c, d, e) { ... }
+[ 1, 2, 3, 4, 5 ]
+function variadic_1(a, b, ...args) { ... }
+[ 1, 2, [ 3, 4, 5 ] ]
+function variadic_2(...args) { ... }
+[ [ 1, 2, 3, 4, 5 ] ]
+-- End --
+
+-- Testcase --
+{%
+	// ordinary, non-variadic function
+	function non_variadic(a, b, c, d, e) {
+		return [ a, b, c, d, e ];
+	}
+
+	// fixed amount of arguments with variable remainder
+	function variadic_1(a, b, ...args) {
+		return [ a, b, args ];
+	}
+
+	// only variable arguments
+	function variadic_2(...args) {
+		return [ args ];
+	}
+
+	print(join("\n", [
+		non_variadic,
+		non_variadic(1, 2, 3, 4, 5),
+		variadic_1,
+		variadic_1(1, 2, 3, 4, 5),
+		variadic_2,
+		variadic_2(1, 2, 3, 4, 5)
+	]), "\n");
+%}
+-- End --
+
+
+Complementary to the "rest" argument syntax, the spread operator may be
+used in function call arguments to pass arrays of values as argument list.
+
+-- Expect stdout --
+[ 1, 2, 3, 4, 5, 6 ]
+[ 4, 5, 6, 1, 2, 3 ]
+[ 1, 2, 3, 1, 2, 3 ]
+[ 1, 2, 3 ]
+-- End --
+
+-- Testcase --
+{%
+	arr = [ 1, 2, 3 ];
+
+	function test(...args) {
+		return args;
+	}
+
+	print(join("\n", [
+		test(...arr, 4, 5, 6),
+		test(4, 5, 6, ...arr),
+		test(...arr, ...arr),
+		test(...arr)
+	]), "\n");
+%}
+-- End --
+
+
+Rest arguments may be only used once in a declaration and they must always
+be the last item in the argument list.
+
+-- Expect stderr --
+Syntax error: Unexpected token
+Expecting ')'
+In line 2, byte 26:
+
+ `    function illegal(...args, ...args2) {}`
+  Near here ------------------^
+
+
+-- End --
+
+-- Testcase --
+{%
+	function illegal(...args, ...args2) {}
+%}
+-- End --
+
+-- Expect stderr --
+Syntax error: Unexpected token
+Expecting ')'
+In line 2, byte 26:
+
+ `    function illegal(...args, a, b) {}`
+  Near here ------------------^
+
+
+-- End --
+
+-- Testcase --
+{%
+	function illegal(...args, a, b) {}
+%}
+-- End --

@@ -1,0 +1,17 @@
+{
+	"01-usage": {
+		"title": "Usage"
+	},
+	"02-syntax": {
+		"title": "Syntax"
+	},
+	"03-memory": {
+		"title": "Memory Management"
+	},
+	"04-arrays": {
+		"title": "Working with Arrays"
+	},
+	"05-dictionaries": {
+		"title": "Working with Dictionaries"
+	}
+}

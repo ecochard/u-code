@@ -1,0 +1,15 @@
+When an empty string was explicitly casted to a number through `+` or
+implicitly through numerical calculations, it was incorrectly treated
+as `NaN` and not `0`.
+
+-- Testcase --
+{{ +"" }}
+{{ "" + 0 }}
+{{ "" - 0.0 }}
+-- End --
+
+-- Expect stdout --
+0
+0
+0
+-- End --

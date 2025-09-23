@@ -1,0 +1,45 @@
+The `ord()` function extracts the byte value of the character within the
+given input string at the given offset.
+
+If the offset argument is omitted, the byte value of the first character
+is returned.
+
+Returns `null` if the given input string argument is not a string.
+
+Returns `null` if the given input string is empty.
+
+Returns `null` if the given offset value is invalid.
+
+Invalid offsets are non-integer values or integers equal to or larger than
+the length of the input string. Negative offsets are converted to positive
+ones by adding the length of the input string. If the negative value is
+too large, the offset is considered invalid.
+
+
+-- Testcase --
+{%
+	print(join("\n", [
+		ord(123),
+		ord(""),
+		ord("abcd", "inval"),
+		ord("abcd"),
+		ord("abcd", 0),
+		ord("abcd", 1),
+		ord("abcd", -1),
+		ord("abcd", 10),
+		ord("abcd", -10)
+	]), "\n");
+%}
+-- End --
+
+-- Expect stdout --
+null
+null
+null
+97
+97
+98
+100
+null
+null
+-- End --

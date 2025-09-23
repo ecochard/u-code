@@ -1,0 +1,265 @@
+The `json()` function parses the given string value as JSON.
+
+Throws an exception if the given input value is not a string.
+Throws an exception if the given input string cannot be parsed as JSON.
+
+Returns the resulting value.
+
+-- Testcase --
+{%
+	print(join("\n", [
+		json("null"),
+		json("true"),
+		json("false"),
+		json("123"),
+		json("456.7890000"),
+		json("-1.4E10"),
+		json("1e309"),
+		json('"A string \u2600"'),
+		json("[ 1, 2, 3 ]"),
+		json('{ "test": [ 1, 2, 3 ] }'),
+
+		// surrounding white space is ignored
+		json('    [ 1, 2, 3 ]    ')
+	]), "\n");
+%}
+-- End --
+
+-- Expect stdout --
+null
+true
+false
+123
+456.789
+-14000000000
+Infinity
+A string ☀
+[ 1, 2, 3 ]
+{ "test": [ 1, 2, 3 ] }
+[ 1, 2, 3 ]
+-- End --
+
+
+Passing a non-string value throws an exception.
+
+-- Testcase --
+{%
+	json(true);
+%}
+-- End --
+
+-- Expect stderr --
+Type error: Passed value is neither a string nor an object
+In line 2, byte 11:
+
+ `    json(true);`
+  Near here ---^
+
+
+-- End --
+
+
+Unparseable JSON throws exceptions.
+
+-- Testcase --
+{%
+	json('[ "incomplete", "array" ');
+%}
+-- End --
+
+-- Expect stderr --
+Syntax error: Failed to parse JSON string: unexpected end of data
+In line 2, byte 33:
+
+ `    json('[ "incomplete", "array" ');`
+  Near here -------------------------^
+
+
+-- End --
+
+-- Testcase --
+{%
+	json('invalid syntax');
+%}
+-- End --
+
+-- Expect stderr --
+Syntax error: Failed to parse JSON string: unexpected character
+In line 2, byte 23:
+
+ `    json('invalid syntax');`
+  Near here ---------------^
+
+
+-- End --
+
+-- Testcase --
+{%
+	json('[] trailing garbage');
+%}
+-- End --
+
+-- Expect stderr --
+Syntax error: Trailing garbage after JSON data
+In line 2, byte 28:
+
+ `    json('[] trailing garbage');`
+  Near here --------------------^
+
+
+-- End --
+
+
+Additionally, `json()` accepts objects implementing a read method as input.
+During JSON parsing, the read method is repeatedly invoked with a buffer size
+hint as sole argument. The return value of the read method is converted to a
+string if needed and passed on to the JSON parser. A `null` or an empty string
+return value is treated as EOF, ending the parse process.
+
+-- Testcase --
+{%
+	let fs = require("fs");
+
+	// parse JSON from open file handle
+	printf("%.J\n",
+		json(fs.open("files/test.json"))
+	);
+%}
+-- End --
+
+-- Expect stdout --
+{
+	"hello": "world"
+}
+-- End --
+
+-- File test.json --
+{"hello":"world"}
+-- End --
+
+
+The `json()` function is able to parse JSON from any object providing a `read()`
+method that incrementally yields JSON source data.
+
+-- Testcase --
+{%
+	let parts = [
+		'{"some"',
+		':',
+		'"object"',
+		', ',
+		'"etc."',
+		':',
+		!0,  // this is stringified to "true"
+		'}'
+	];
+
+	let producer = {
+		read: function(size) {
+			return shift(parts);
+		}
+	};
+
+	// parse JSON from producer object
+	printf("%.J\n",
+		json(producer)
+	);
+%}
+-- End --
+
+-- Expect stdout --
+{
+	"some": "object",
+	"etc.": true
+}
+-- End --
+
+
+Passing objects or resources not providing a `read()` method yields an exception.
+
+-- Testcase --
+{%
+	json({});
+%}
+-- End --
+
+-- Expect stderr --
+Type error: Input object does not implement read() method
+In line 2, byte 9:
+
+ `    json({});`
+  Near here -^
+
+
+-- End --
+
+
+Exceptions triggered by the `read()` method are properly forwarded.
+
+-- Testcase --
+{%
+	json({
+		read: function() {
+			die("Exception in read()");
+		}
+	});
+%}
+-- End --
+
+-- Expect stderr --
+Exception in read()
+In [anonymous function](), line 4, byte 29:
+  called from function json ([C])
+  called from anonymous function ([stdin]:6:3)
+
+ `            die("Exception in read()");`
+  Near here ---------------------------^
+
+
+-- End --
+
+
+EOF stops parsing and does not lead to further `read()` invocations.
+
+-- Testcase --
+{%
+	let parts = [
+		'["some",',
+		'"JSON array",',
+		'true,false,1,2,3',
+		']',
+		'',                  // empty string treated as EOF
+		'{"some":',          // this is not reached in the first pass
+		'"object"}',
+		null,		         // null treated as EOF
+		'"test ',            // this is not reached in the second pass
+		'value"'
+	];
+
+	let producer = { read: () => shift(parts) };
+
+	printf("%.J\n", [
+		json(producer),
+		json(producer),
+		json(producer)
+	]);
+%}
+-- End --
+
+-- Expect stdout --
+[
+	[
+		"some",
+		"JSON array",
+		true,
+		false,
+		1,
+		2,
+		3
+	],
+	{
+		"some": "object"
+	},
+	"test value"
+]
+-- End --
