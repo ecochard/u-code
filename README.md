@@ -8,7 +8,7 @@ git submodule update --init --recursive
 cd json-c
 mkdir build
 cd build
-cmake ..
+cmake .. -G "Unix Makefiles"
 cd ../..
 ```
 
