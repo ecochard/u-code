@@ -53,7 +53,7 @@ uc_number_parse_common(const char *buf, bool octal, char **end)
 	double d;
 	char *e;
 
-	while (isspace(*p))
+	while (isspace((uint8_t)*p))
 		p++;
 
 	if (*p == '-') {
@@ -64,7 +64,7 @@ uc_number_parse_common(const char *buf, bool octal, char **end)
 		p++;
 	}
 
-	if (*p != 0 && !isxdigit(*p))
+	if (*p != 0 && !isxdigit((uint8_t)*p))
 		return NULL;
 
 	if (!end)
@@ -104,7 +104,7 @@ uc_number_parse_common(const char *buf, bool octal, char **end)
 	if (base >= 10 && (**end == '.' || (**end|32) == 'e')) {
 		d = strtod(p, end);
 
-		while (isspace(**end))
+		while (isspace((uint8_t)(**end)))
 			(*end)++;
 
 		if (**end != 0)
@@ -116,7 +116,7 @@ uc_number_parse_common(const char *buf, bool octal, char **end)
 		return ucv_double_new(d);
 	}
 
-	while (isspace(**end))
+	while (isspace((uint8_t)(**end)))
 		(*end)++;
 
 	if (**end != 0)
@@ -149,7 +149,7 @@ uc_double_pack(double d, char *buf, bool little_endian)
 {
 	int8_t step = little_endian ? -1 : 1;
 	uint32_t hibits = 0, lobits = 0;
-	int32_t exponent = 0;
+	int exponent = 0;
 	bool sign = false;
 	double fraction;
 	uint8_t *p;

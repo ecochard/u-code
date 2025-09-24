@@ -160,6 +160,7 @@ uc_vm_alloc_global_scope(uc_vm_t *vm)
 static void
 uc_vm_output_exception(uc_vm_t *vm, uc_exception_t *ex);
 
+#if !defined( WIN32 ) && !defined(ESP32)
 static void
 uc_vm_signal_handler(int sig)
 {
@@ -170,7 +171,6 @@ uc_vm_signal_handler(int sig)
 	uc_vm_signal_raise(vm, sig);
 }
 
-#ifndef WIN32
 static void
 uc_vm_signal_handlers_setup(uc_vm_t *vm)
 {
@@ -253,7 +253,7 @@ void uc_vm_init(uc_vm_t *vm, uc_parse_config_t *config)
 
 	uc_vm_trace_set(vm, 0);
 
-#ifndef WIN32
+#if !defined( WIN32 ) && !defined(ESP32)
 	uc_vm_signal_handlers_setup(vm);
 #endif
 }
@@ -263,7 +263,7 @@ void uc_vm_free(uc_vm_t *vm)
 	uc_upvalref_t *ref;
 	size_t i;
 
-#ifndef WIN32
+#if !defined( WIN32 ) && !defined(ESP32)
 	uc_vm_signal_handlers_reset(vm);
 #endif
 
@@ -761,7 +761,7 @@ uc_dump_insn(uc_vm_t *vm, uint8_t *pos, uc_vm_insn_t insn)
 	case -4:
 		fprintf(stderr, " {%c0x%x}",
 			vm->arg.s32 < 0 ? '-' : '+',
-			(uint32_t)(vm->arg.s32 < 0 ? -vm->arg.s32 : vm->arg.s32));
+			(unsigned)(vm->arg.s32 < 0 ? -vm->arg.s32 : vm->arg.s32));
 		break;
 
 	case 1:
@@ -773,7 +773,7 @@ uc_dump_insn(uc_vm_t *vm, uint8_t *pos, uc_vm_insn_t insn)
 		break;
 
 	case 4:
-		fprintf(stderr, " {0x%x}", vm->arg.u32);
+		fprintf(stderr, " {0x%x}", (unsigned)vm->arg.u32);
 		break;
 
 	default:

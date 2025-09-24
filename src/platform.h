@@ -119,6 +119,14 @@ int fnmatch(const char *pattern, const char *string,int flags);
 #define HAVE_PARSE_END 1
 #define HAVE_ARRAY_EXT 1
 
+#elif defined( ESP32 )
+#include <endian.h>
+#include "lwip/tcp.h"
+
+#define FNM_NOMATCH 1
+int fnmatch(const char *pattern, const char *string,int flags);
+
+
 #else
 # error Unsupported platform
 #endif

@@ -38,7 +38,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#ifndef WIN32
+#if !defined( WIN32 ) && !defined(ESP32)
 #include <dlfcn.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
@@ -118,9 +118,9 @@ source_filename(uc_source_t *src, uint32_t line)
 	size_t len = strlen(name);
 
 	if (len > 12)
-		snprintf(buf, sizeof(buf), "...%s:%u", name + (len - 9), line);
+		snprintf(buf, sizeof(buf), "...%s:%u", name + (len - 9), (unsigned)line);
 	else
-		snprintf(buf, sizeof(buf), "%12s:%u", name, line);
+		snprintf(buf, sizeof(buf), "%12s:%u", name, (unsigned)line);
 
 	return buf;
 }
@@ -1012,7 +1012,7 @@ uc_hex(uc_vm_t *vm, size_t nargs)
 
 	v = ucv_string_get(val);
 
-	if (!v || !isxdigit(*v))
+	if (!v || !isxdigit((uint8_t)(*v)))
 		return ucv_double_new(NAN);
 
 	n = strtoll(v, &e, 16);
@@ -2318,7 +2318,7 @@ uc_printf_common(uc_vm_t *vm, size_t nargs, uc_stringbuf_t *buf)
 			argpos = argidx;
 
 			if (*p >= '1' && *p <= '9') {
-				while (isdigit(*p))
+				while (isdigit((uint8_t)*p))
 					width = width * 10 + (*p++ - '0');
 
 				/* if a dollar sign follows, this is an argument index */
@@ -2346,7 +2346,7 @@ uc_printf_common(uc_vm_t *vm, size_t nargs, uc_stringbuf_t *buf)
 			}
 
 			if (*p >= '1' && *p <= '9') {
-				while (isdigit(*p))
+				while (isdigit((uint8_t)*p))
 					width = width * 10 + (*p++ - '0');
 
 				flags |= FMT_F_WIDTH;
@@ -2359,11 +2359,11 @@ parse_precision:
 				if (*p == '-') {
 					p++;
 
-					while (isdigit(*p))
+					while (isdigit((uint8_t)*p))
 						p++;
 				}
 				else {
-					while (isdigit(*p))
+					while (isdigit((uint8_t)*p))
 						precision = precision * 10 + (*p++ - '0');
 				}
 
@@ -2669,6 +2669,7 @@ uc_printf(uc_vm_t *vm, size_t nargs)
 	return ucv_int64_new(len);
 }
 
+
 #ifdef WIN32
 static bool
 uc_require_so(uc_vm_t *vm, const char *path, uc_value_t **res)
@@ -2698,7 +2699,7 @@ uc_require_so(uc_vm_t *vm, const char *path, uc_value_t **res)
 
 	return true;
 }
-#else
+#elif !defined(ESP32)
 static bool
 uc_require_so(uc_vm_t *vm, const char *path, uc_value_t **res)
 {
@@ -2816,14 +2817,17 @@ uc_require_path(uc_vm_t *vm, const char *path_template, const char *name, uc_val
 
 			last = q + 1;
 		}
-		else if (!isalnum(*q) && *q != '_') {
+		else if (!isalnum((uint8_t)*q) && *q != '_') {
 			goto out;
 		}
 	}
 
+#if !defined(ESP32)
 	if (!strcmp(p + 1, SHAREDLIB_EXT))
 		rv = uc_require_so(vm, buf->buf, res);
-	else if (!strcmp(p + 1, ".uc") && !so_only)
+	else 
+#endif
+	if (!strcmp(p + 1, ".uc") && !so_only)
 		rv = uc_require_ucode(vm, buf->buf, NULL, res, true);
 
 	if (rv)
@@ -2999,6 +3003,8 @@ uc_require(uc_vm_t *vm, size_t nargs)
  * iptoarr("foo")                      // null (invalid address)
  * iptoarr(123)                        // null (not a string)
  */
+
+#if !defined(ESP32)
 static uc_value_t *
 uc_iptoarr(uc_vm_t *vm, size_t nargs)
 {
@@ -3035,6 +3041,7 @@ uc_iptoarr(uc_vm_t *vm, size_t nargs)
 
 	return NULL;
 }
+#endif
 
 static int
 check_byte(uc_value_t *v)
@@ -3077,6 +3084,8 @@ check_byte(uc_value_t *v)
  * arrtoip([ 1, "2", -5, 300 ])  // null (invalid values)
  * arrtoip("123")                // null (not an array)
  */
+
+#if !defined(ESP32)
 static uc_value_t *
 uc_arrtoip(uc_vm_t *vm, size_t nargs)
 {
@@ -3124,6 +3133,7 @@ uc_arrtoip(uc_vm_t *vm, size_t nargs)
 		return NULL;
 	}
 }
+#endif
 
 /**
  * Match the given string against the regular expression pattern specified as
@@ -3590,7 +3600,7 @@ uc_json_from_string(uc_vm_t *vm, uc_value_t *str, json_object **jso)
 		p = ucv_string_get(str);
 
 		for (i = json_tokener_get_parse_end(tok); i < ucv_string_length(str); i++) {
-			if (!isspace(p[i])) {
+			if (!isspace((uint8_t)p[i])) {
 				uc_vm_raise_exception(vm, EXCEPTION_SYNTAX,
 				                      "Trailing garbage after JSON data");
 
@@ -3918,7 +3928,7 @@ uc_include(uc_vm_t *vm, size_t nargs)
  * }, "Alice");
  */
 
-#ifndef WIN32
+#if !defined(WIN32)
 static uc_value_t *
 uc_render(uc_vm_t *vm, size_t nargs)
 {
@@ -4038,7 +4048,7 @@ uc_warn(uc_vm_t *vm, size_t nargs)
  * system("sleep 3 && echo 'Success'", 1000);
  */
 
- #ifndef WIN32
+ #if !defined(WIN32) && !defined(ESP32)
 static uc_value_t *
 uc_system(uc_vm_t *vm, size_t nargs)
 {
@@ -4514,7 +4524,7 @@ uc_wildcard(uc_vm_t *vm, size_t nargs)
 	if (!subject || ucv_type(pattern) != UC_STRING)
 		return NULL;
 
-#ifndef WIN32
+#if !defined( WIN32 ) && !defined(ESP32)
 	if (ucv_is_truish(icase))
 		flags |= FNM_CASEFOLD;
 #endif
@@ -5232,7 +5242,7 @@ uc_mktime_common(uc_vm_t *vm, size_t nargs, bool local)
 	if (tm.tm_year >= 1900)
 		tm.tm_year -= 1900;
 
-#ifndef WIN32		
+#if !defined(WIN32) && !defined(ESP32)
 	t = (local ? mktime : timegm)(&tm);
 #else
 	t = mktime(&tm);
@@ -5983,7 +5993,7 @@ uc_callfunc(uc_vm_t *vm, size_t nargs)
  * signal('SIGINT') == intexit;  // true
  */
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(ESP32)
 static uc_value_t *
 uc_signal(uc_vm_t *vm, size_t nargs)
 {
@@ -6106,23 +6116,15 @@ const uc_function_list_t uc_stdlib_functions[] = {
 	{ "sprintf",	uc_sprintf },
 	{ "printf",		uc_printf },
 	{ "require",	uc_require },
-	{ "iptoarr",	uc_iptoarr },
-	{ "arrtoip",	uc_arrtoip },
 	{ "match",		uc_match },
 	{ "replace",	uc_replace },
 	{ "json",		uc_json },
 	{ "include",	uc_include },
 	{ "warn",		uc_warn },
-#ifndef WIN32
-	{ "system",		uc_system },
-#endif
 	{ "trace",		uc_trace },
 	{ "proto",		uc_proto },
 	{ "sleep",		uc_sleep },
 	{ "ASSERT",		uc_assert },
-#ifndef WIN32	
-	{ "render",		uc_render },
-#endif
 	{ "regexp",		uc_regexp },
 	{ "wildcard",	uc_wildcard },
 	{ "sourcepath",	uc_sourcepath },
@@ -6143,7 +6145,18 @@ const uc_function_list_t uc_stdlib_functions[] = {
 	{ "loadfile",	uc_loadfile },
 	{ "call",		uc_callfunc },
 	{ "now",		uc_now },
-#ifndef WIN32	
+
+#if !defined(ESP32)
+	{ "iptoarr",	uc_iptoarr },
+	{ "arrtoip",	uc_arrtoip },
+#endif
+
+#if !defined(WIN32)
+{ "render",		uc_render },
+#endif
+
+#if !defined(WIN32) && !defined(ESP32)
+	{ "system",		uc_system },
 	{ "signal",		uc_signal },
 #endif
 };

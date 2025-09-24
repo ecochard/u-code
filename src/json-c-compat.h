@@ -23,7 +23,7 @@
 
 /* json-c compat */
 
-#ifndef WIN32
+#if 0
 #ifndef HAVE_PARSE_END
 static inline size_t json_tokener_get_parse_end(struct json_tokener *tok) {
 	return (size_t)tok->char_offset;

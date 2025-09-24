@@ -3556,6 +3556,9 @@ uc_compiler_compile_dynload(uc_compiler_t *compiler, const char *name, uc_value_
 static bool
 uc_compiler_is_dynlink_module(uc_compiler_t *compiler, const char *name, const char *path)
 {
+#if defined(ESP32)
+	return false;
+#else
 	uc_search_path_t *dynlink_list = &compiler->parser->config->force_dynlink_list;
 	size_t i;
 	char *p;
@@ -3570,6 +3573,7 @@ uc_compiler_is_dynlink_module(uc_compiler_t *compiler, const char *name, const c
 	p = strrchr(path, '.');
 
 	return (p && !strcmp(p, SHAREDLIB_EXT));
+#endif
 }
 
 static bool

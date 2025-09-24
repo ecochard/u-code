@@ -147,8 +147,9 @@ write_u16(size_t value, FILE *file)
 {
 	uint16_t n;
 
-	if (sizeof(value) > sizeof(n))
+	if (sizeof(value) > sizeof(n)) {
 		ASSERT(value <= UINT16_MAX);
+	}
 
 	n = htobe16((uint16_t)value);
 
