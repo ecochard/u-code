@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "rp2040",
+            "includePath": [
+                "${workspaceFolder}/src/*",
+				"${workspaceFolder}/regex",
+				"${workspaceFolder}/json-c/**"
+            ],
+            "defines": [
+                "_DEBUG",
+				"WIN32"
+        	],
+            "cStandard": "c99",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

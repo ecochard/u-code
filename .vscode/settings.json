@@ -1,0 +1,14 @@
+{
+	"files.associations": {
+		"unistd.h": "c",
+		"vasprintf_compat.h": "c",
+		"libintl.h": "c",
+		"regex-internal.h": "c",
+		"c-regex.h": "c",
+		"compare": "c",
+		"string.h": "c",
+		"math.h": "c",
+		"platform.h": "c",
+		"limits.h": "c"
+	}
+}
