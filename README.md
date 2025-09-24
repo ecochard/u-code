@@ -1,6 +1,18 @@
 # notes
 forked from https://github.com/jow-/ucode/tree/master
 
+build:
+
+```bash
+git clone https://github.com/json-c/json-c.git
+cd json-c
+mkdir build
+cd build
+cmake ..
+cd ../..
+```
+
+
 # The ucode Scripting Language
 
 The ucode language is a small, general-purpose scripting language that resembles

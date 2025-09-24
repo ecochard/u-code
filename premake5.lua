@@ -26,6 +26,7 @@ project "ucode"
     includedirs {
 		"src",
 		"json-c",
+		"json-c/build",
 		"regex",
     }
 
@@ -53,6 +54,7 @@ project "math"
 	includedirs {
 		"src",
 		"json-c",
+		"json-c/build",
 		"regex",
     }
 
@@ -73,6 +75,7 @@ project "engine"
 	includedirs {
 		"src",
 		"json-c",
+		"json-c/build",
 		"regex",
     }
 

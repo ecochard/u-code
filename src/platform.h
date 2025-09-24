@@ -116,6 +116,9 @@ int fnmatch(const char *pattern, const char *string,int flags);
 #define MODULE_EXPORT 	
 //__attribute__((dllexport))
 
+#define HAVE_PARSE_END 1
+#define HAVE_ARRAY_EXT 1
+
 #else
 # error Unsupported platform
 #endif
