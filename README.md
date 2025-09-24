@@ -4,13 +4,16 @@ forked from https://github.com/jow-/ucode/tree/master
 build:
 
 ```bash
-git clone https://github.com/json-c/json-c.git
+git submodule update --init --recursive
 cd json-c
 mkdir build
 cd build
 cmake ..
 cd ../..
 ```
+
+
+
 
 
 # The ucode Scripting Language
